@@ -1,0 +1,28 @@
+# Dependency Matrix
+
+Mapping version giữa các SDK.
+
+## iOS
+
+| VDOMiniApp | VDONetwork | VDOUtils |
+| ---------- | ---------- | -------- |
+| 2.2.0-rc2  | TBD        | TBD      |
+| 2.1.0      | 1.0.6      | 1.0.4    |
+
+## Android
+
+| VDOMiniApp | minSdk | targetSdk | Gradle |
+| ---------- | ------ | --------- | ------ |
+| 2.2.0-rc3  | 24     | 34        | 8.0    |
+| 2.0.20     | 24     | 34        | 8.0    |
+
+> **Note:** 2.2.0-rc3 bumps `compileSdk` to 35 (targetSdk remains 34).
+
+## Lưu ý
+
+File này hữu ích cho:
+
+- Debugging
+- Rollback
+- Compatibility tracking
+- Release management
