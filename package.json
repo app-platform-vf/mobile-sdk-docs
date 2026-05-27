@@ -22,8 +22,7 @@
   },
   "devDependencies": {
     "@docusaurus/module-type-aliases": "^3.6.3",
-    "@docusaurus/types": "^3.6.3",
-    "patch-package": "^8.0.1"
+    "@docusaurus/types": "^3.6.3"
   },
   "browserslist": {
     "production": [
