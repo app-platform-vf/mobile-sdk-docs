@@ -4,7 +4,6 @@ import {themes as prismThemes} from 'prism-react-renderer';
 const config = {
   title: 'VDO SDK Docs',
   tagline: 'Documentation for VDO Mobile SDKs',
-  favicon: 'img/favicon.ico',
 
   url: 'https://app-platform-vf.github.io',
   baseUrl: '/sdk-docs/',
