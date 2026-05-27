@@ -6,10 +6,10 @@ const config = {
   tagline: 'Documentation for VDO Mobile SDKs',
 
   url: 'https://app-platform-vf.github.io',
-  baseUrl: '/sdk-docs/',
+  baseUrl: '/mobile-sdk-docs/',
 
   organizationName: 'app-platform-vf',
-  projectName: 'sdk-docs',
+  projectName: 'mobile-sdk-docs',
   deploymentBranch: 'gh-pages',
   trailingSlash: false,
 
@@ -51,7 +51,7 @@ const config = {
             label: 'Docs',
           },
           {
-            href: 'https://github.com/app-platform-vf/sdk-docs',
+            href: 'https://github.com/app-platform-vf/mobile-sdk-docs',
             label: 'GitHub',
             position: 'right',
           },
