@@ -2,14 +2,17 @@
 
 ## HostAppBridge
 
-`HostAppBridge` cho phép mini app gọi ra Host App. Khởi tạo qua `HostAppBridgeImpl`:
+`HostAppBridge` cho phép mini app gọi ra host app. Tạo một class implement interface này và gán vào `MiniAppSdk.getInstance().hostAppBridge` trước khi mở mini app:
 
 ```kotlin
-val hostAppBridge = HostAppBridgeImpl(hostApp = object : HostAppListener {
+class MyHostAppBridge : HostAppBridge {
 
-    // Trả về thông tin user theo danh sách field yêu cầu từ web
-    override fun getUserData(miniAppKey: String, dataName: List<String>): Map<String, Any?> {
-        val result = hashMapOf<String, Any>()
+    override fun getUserData(
+        miniAppKey: String,
+        dataName: List<String>,
+        resultHandler: (Map<String, Any?>) -> Unit
+    ) {
+        val result = mutableMapOf<String, Any?>()
         if (dataName.contains(UserDataName.UserName.dataName))
             result[UserDataName.UserName.dataName] = "<username>"
         if (dataName.contains(UserDataName.FullName.dataName))
@@ -20,128 +23,233 @@ val hostAppBridge = HostAppBridgeImpl(hostApp = object : HostAppListener {
             result[UserDataName.Avatar.dataName] = "<avatar url>"
         if (dataName.contains(UserDataName.PhoneNumber.dataName))
             result[UserDataName.PhoneNumber.dataName] = "<phone number>"
-        return result
+        resultHandler(result)
     }
 
-    override fun expiredSession(miniAppId: Int, data: Map<String, Any>) {}
+    override fun expiredSession(miniAppKey: String, data: Map<String, Any>) {}
 
-    override fun observeLifecycle(miniAppId: Int, miniAppLifecycle: MiniAppLifecycle) {}
+    override fun observeLifecycle(miniAppKey: String, miniAppLifecycle: MiniAppLifecycle) {}
 
-    override fun paymentStart(miniAppId: Int, request: String) {}
+    override fun paymentStart(miniAppKey: String, request: String) {}
 
-    override fun paymentEnd(miniAppId: Int, request: String) {}
+    override fun paymentEnd(miniAppKey: String, request: String) {}
 
-    override fun paymentRequest(miniAppId: Int, data: Map<String, Any>) {}
+    override fun paymentRequest(miniAppKey: String, data: Map<String, Any>) {}
 
-    // Trả về true để consume message; false để SDK xử lý
-    override fun intercept(
-        message: String,
-        miniAppCallbackDelegate: MiniAppBridgeExecutor
-    ): Boolean = false
-})
+    override fun intercept(miniAppKey: String, message: String) {}
+
+    override fun onReturnHome(miniAppKey: String, data: String?) {}
+
+    override fun getLocation(resultHandler: (MiniAppLocation?) -> Unit) {
+        resultHandler(null) // cung cấp vị trí thiết bị nếu cần
+    }
+
+    override fun tearDown() {}
+}
 ```
 
-### HostAppListener methods
+### Các method của HostAppBridge
 
-| Method | Mô tả |
-| ------ | ----- |
-| `getUserData` | Trả về thông tin user theo field được yêu cầu từ web |
-| `expiredSession` | Callback khi session hết hạn |
-| `observeLifecycle` | Callback khi lifecycle của mini app thay đổi |
-| `paymentStart` | Callback khi bắt đầu luồng thanh toán |
-| `paymentEnd` | Callback khi kết thúc luồng thanh toán |
-| `paymentRequest` | Callback khi mini app gửi payment request |
-| `intercept` | Intercept JS bridge message; trả về `true` để consume |
+| Method             | Mô tả                                                                             |
+| ------------------ | --------------------------------------------------------------------------------- |
+| `getUserData`      | Cung cấp thông tin user theo yêu cầu từ mini app; kết quả trả qua `resultHandler` |
+| `expiredSession`   | Callback khi session hết hạn                                                      |
+| `intercept`        | Intercept JS bridge message từ mini app                                           |
+| `observeLifecycle` | Theo dõi lifecycle của mini app                                                   |
+| `paymentRequest`   | Callback khi mini app gửi payment request                                         |
+| `paymentStart`     | Callback khi bắt đầu luồng thanh toán                                             |
+| `paymentEnd`       | Callback khi kết thúc luồng thanh toán                                            |
+| `onReturnHome`     | Callback khi user nhấn về trang chủ                                               |
+| `getLocation`      | Cung cấp vị trí thiết bị; kết quả trả qua `resultHandler`                        |
+| `tearDown`         | Dọn dẹp tài nguyên khi SDK bị hủy                                                |
 
 ## HostView
 
-`HostView` xác định activity/context và container chứa mini app:
+`HostView` xác định context và container chứa mini app:
 
 ```kotlin
 HostView(
-    context = this,              // Context (Activity hoặc Application)
-    containerId = R.id.container, // View container ID
-    miniAppHeaderConfig = null   // MiniAppThemeConfig tùy chọn
+    context = this,                   // Context (Activity hoặc Application)
+    containerId = R.id.container,     // View container ID
+    miniAppHeaderConfig = themeConfig // MiniAppThemeConfig tùy chọn
 )
 ```
 
-> **Lưu ý (từ 2.2.0):** Constructor nhận `context: Context` thay vì `activity: FragmentActivity`. Property `activity` vẫn tồn tại nhưng là nullable (`context as? FragmentActivity`). `miniAppHeaderConfig` có kiểu `MiniAppThemeConfig` thay vì `MiniAppHeaderConfig`.
+> `activity` là derived property nullable (`context as? FragmentActivity`) — không cần truyền trực tiếp.
 
 ## MiniAppConfig
 
 `MiniAppConfig` chứa cấu hình cho một phiên mở mini app:
 
-| Field | Type | Default | Mô tả |
-| ----- | ---- | ------- | ----- |
-| `initRequest` | `InitRequest` | — | Thông tin session và device |
-| `networkInfo` | `NetworkInfo?` | `null` | Thông tin mạng |
-| `themeConfig` | `MiniAppThemeConfig?` | `null` | Cấu hình giao diện app bar (thay `headerConfig` từ 2.2.0) |
-| `containerId` | `Int` (`@IdRes`) | `-1` | Container view ID |
-| `needParams` | `Boolean?` | `true` | Có yêu cầu init params hay không |
+| Field         | Type                  | Default | Mô tả                             |
+| ------------- | --------------------- | ------- | --------------------------------- |
+| `initRequest` | `InitRequest?`        | `null`  | Thông tin session và device       |
+| `networkInfo` | `NetworkInfo?`        | `null`  | Thông tin mạng                    |
+| `themeConfig` | `MiniAppThemeConfig?` | `null`  | Cấu hình giao diện toolbar        |
+| `containerId` | `Int` (`@IdRes`)      | `-1`    | Container view ID                 |
+| `needParams`  | `Boolean?`            | `true`  | Có yêu cầu init params hay không |
 
-## MiniAppHeaderConfig
+## MiniAppThemeConfig
 
-Cấu hình app bar phía trên màn hình mini app (không bắt buộc):
+`MiniAppThemeConfig` cấu hình giao diện toolbar của mini app. Có thể truyền khi mở mini app hoặc cập nhật tại runtime qua JS bridge event `MiniAppEvent.UPDATE_MINI_APP_THEME`:
 
 ```kotlin
-MiniAppHeaderConfig(
-    enabled = false,                             // ẩn/hiện app bar
-    title = "Mini App",                          // tiêu đề
-    bgColor = resources.getColor(R.color.black), // màu nền
-    fgColor = resources.getColor(R.color.white)  // màu chữ/icon
+val themeConfig = MiniAppThemeConfig(
+    headerColor = "#1A73E8",
+    headerTitle = "My MiniApp",
+    textColor = "#FFFFFF",
+    leftButton = LeftButtonType.BACK,
+    toolbarMode = ToolbarMode.NORMAL,
+    hideAndroidBottomNavigationBar = true,
+    actionButtonThemeType = ActionButtonThemeType.DARK,
+    statusBarForeground = StatusBarForeground.LIGHT
 )
 ```
 
-> **Lưu ý (từ 2.2.0):** `HostView` và `MiniAppConfig` sử dụng `MiniAppThemeConfig` thay cho `MiniAppHeaderConfig`. Xem [migration guide](../../migration/android/2.0.20-to-2.2.0.md) để biết thêm chi tiết.
+### Tham số MiniAppThemeConfig
 
-## JS Bridge Events (MiniAppEvent)
+| Tham số                          | Type                     | Mô tả                                                                                   |
+| -------------------------------- | ------------------------ | --------------------------------------------------------------------------------------- |
+| `headerColor`                    | `String?`                | Màu nền toolbar, hex string (ví dụ `"#FF0000"`) hoặc tên màu (`"white"`, `"black"`)   |
+| `headerTitle`                    | `String?`                | Tiêu đề hiển thị trên toolbar                                                           |
+| `textColor`                      | `String?`                | Màu chữ/icon trên toolbar, hex string hoặc `"WHITE"` / `"BLACK"`                       |
+| `leftButton`                     | `LeftButtonType?`        | `BACK` (hiện nút back) hoặc `NONE` (ẩn nút back)                                      |
+| `toolbarMode`                    | `ToolbarMode?`           | `NORMAL`, `HIDDEN`, hoặc `TRANSPARENT`                                                  |
+| `hideAndroidBottomNavigationBar` | `Boolean?`               | Ẩn navigation bar phía dưới (mặc định `true`)                                          |
+| `actionButtonThemeType`          | `ActionButtonThemeType?` | `LIGHT` hoặc `DARK` — màu nền capsule chứa nút more/close                              |
+| `statusBarForeground`            | `StatusBarForeground?`   | `DARK` (icon đen) hoặc `LIGHT` (icon trắng); `null` = tự động theo `headerColor`      |
 
-Các event được mini app gửi qua JS bridge. Từ 2.2.0, các event sau được bổ sung:
+### ToolbarMode
 
-| Event | Mô tả |
-| ----- | ----- |
-| `OPEN_EXTERNAL_LINK` | Mini app yêu cầu mở URL bên ngoài |
-| `OPEN_MINI_APP` | Mini app yêu cầu mở một mini app khác |
-| `MINI_APP_TOKEN` | Mini app yêu cầu lấy login token |
-| `UPDATE_MINI_APP_THEME` | Mini app yêu cầu cập nhật màu toolbar |
-| `EVENT_TRACKING` | Mini app gửi tracking event |
+| Giá trị       | Mô tả                                                          |
+| ------------- | -------------------------------------------------------------- |
+| `NORMAL`      | Status bar và header bar hiển thị bình thường                  |
+| `HIDDEN`      | Ẩn header bar, mini app full screen                            |
+| `TRANSPARENT` | Header bar trong suốt, nội dung mini app hiển thị phía dưới   |
 
 ## InitRequest
 
 `InitRequest` chứa thông tin session và device gửi khi khởi động mini app:
 
 ```kotlin
-fun createInitRequest(
-    auth: SignInResponse,
-    account: Account,
-    needSession: Boolean = true
-): InitRequest {
-    return InitRequest(
-        requestId = Toolbox.orderId,
-        data = InitRequest.Data(
-            internal = InitRequest.Data.Internal(
-                session = if (needSession) Session(
-                    auth = auth.toAuth(),
-                    accInfo = account?.toAccount()
-                ) else null,
-                deviceInfo = DeviceInfo(
-                    imei = "<imei>",
-                    platform = DeviceInfo.Platform(
-                        os = "android",
-                        osVersion = Build.VERSION.SDK_INT.toString()
-                    )
+val initRequest = InitRequest(
+    requestId = "<unique-request-id>",
+    data = InitRequest.Data(
+        internal = InitRequest.Data.Internal(
+            session = Session(
+                auth = Auth(
+                    accessToken = "<access-token>",
+                    refreshToken = "<refresh-token>",
+                    username = "<username>"
+                ),
+                accInfo = AccInfo(
+                    accountId = "<account-id>",
+                    phoneNumber = "<phone-number>",
+                    displayName = "<display-name>"
                 )
             ),
-            external = InitRequest.Data.External(
-                generalInfo = GeneralInfo(
-                    msisdn = "<phone number>",
-                    orderId = "<order id>"  // không bắt buộc
+            deviceInfo = DeviceInfo(
+                imei = "<imei-or-device-id>",
+                platform = DeviceInfo.Platform(
+                    os = "android",
+                    osVersion = Build.VERSION.SDK_INT.toString()
                 )
             )
         ),
-        eventStatus = EventStatus.fromCode(ErrorCode.SDK000)
-    )
+        external = InitRequest.Data.External(
+            generalInfo = GeneralInfo(
+                msisdn = "<phone-number>",
+                orderId = "<order-id>"  // tùy chọn
+            )
+        )
+    ),
+    eventStatus = EventStatus.fromCode(ErrorCode.SDK000)
+)
+```
+
+Truyền `session = null` cho các flow không cần xác thực.
+
+### Cấu trúc InitRequest JSON
+
+```json
+{
+  "requestId": "string",
+  "event": "INIT",
+  "sender": "MINIAPP_SDK",
+  "data": {
+    "internal": {
+      "session": {
+        "auth": {
+          "accessToken": "string",
+          "refreshToken": "string",
+          "username": "string",
+          "userType": "string",
+          "loginType": "string",
+          "twofaChannelType": "string",
+          "twofaChannelValue": "string"
+        },
+        "accInfo": {
+          "accountId": "string",
+          "username": "string",
+          "phoneNumber": "string",
+          "displayName": "string",
+          "accountType": "string",
+          "status": "string"
+        }
+      },
+      "deviceInfo": {
+        "platform": { "os": "string", "osVersion": "string" },
+        "imei": "string"
+      }
+    },
+    "external": {
+      "generalInfo": {
+        "msisdn": "string",
+        "orderId": "string",
+        "billCode": "string",
+        "masterMerchantCode": "string",
+        "merchantCode": "string",
+        "totalAmount": "string",
+        "serviceCode": "string",
+        "bankCode": "string",
+        "extraData": "string"
+      },
+      "serviceInfo": {
+        "serviceId": "string",
+        "serviceName": "string",
+        "serviceType": "string",
+        "serviceProviderCode": "string"
+      }
+    }
+  },
+  "eventStatus": {
+    "errorCode": "string",
+    "errorMessageVN": "string",
+    "errorMessageEN": "string"
+  }
 }
 ```
 
-`data.internal.session` chứa access token, thông tin tài khoản và trạng thái 2FA. Truyền `needSession = false` cho các flow không cần xác thực.
+## MiniAppLifecycle
+
+`MiniAppLifecycle` là class hierarchy thể hiện trạng thái của mini app. Nhận qua `HostAppBridge.observeLifecycle()`:
+
+```kotlin
+override fun observeLifecycle(miniAppKey: String, miniAppLifecycle: MiniAppLifecycle) {
+    when (miniAppLifecycle) {
+        is MiniAppLifecycle.Initialization -> { /* mini app đang khởi tạo */ }
+        is MiniAppLifecycle.RunningInForeground -> { /* mini app đang chạy ở foreground */ }
+        is MiniAppLifecycle.RunningInBackground -> { /* mini app chuyển sang background */ }
+        is MiniAppLifecycle.Error -> { Log.e("MiniApp", miniAppLifecycle.msg) }
+        is MiniAppLifecycle.Unloading -> { /* mini app đang đóng */ }
+    }
+}
+```
+
+| State                 | Mô tả                                    |
+| --------------------- | ---------------------------------------- |
+| `Initialization`      | Mini app đang khởi tạo                   |
+| `RunningInForeground` | Mini app đang chạy ở foreground          |
+| `RunningInBackground` | Mini app chuyển sang background          |
+| `Error(msg)`          | Mini app gặp lỗi; `msg` chứa mô tả lỗi  |
+| `Unloading`           | Mini app đang đóng                       |
