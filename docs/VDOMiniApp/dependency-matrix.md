@@ -6,7 +6,7 @@ Mapping version giữa các SDK.
 
 | VDOMiniApp | VDONetwork | VDOUtils |
 | ---------- | ---------- | -------- |
-| 2.2.0-rc2  | TBD        | TBD      |
+| 2.2.0-rc2  | 1.0.7-rc1        | 1.0.4      |
 | 2.1.0      | 1.0.6      | 1.0.4    |
 
 ## Android

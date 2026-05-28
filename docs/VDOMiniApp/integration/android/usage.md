@@ -53,6 +53,45 @@ MiniAppSdk.getInstance().openMiniAppActivityFromDeepLink(
 
 `qrContent` nhận: Adjust link, Adjust QR link, hoặc QR data link.
 
+## Tạo InitRequest
+
+`initRequest` chứa thông tin định danh device và session:
+
+```kotlin
+fun createInitRequest(): InitRequest {
+    return InitRequest(
+        requestId = System.currentTimeMillis().toString(),
+        data = InitRequest.Data(
+            external = InitRequest.Data.External(
+                generalInfo = GeneralInfo(
+                    msisdn = "xxxxxxxxxx", // sdt đăng nhập
+                    orderId = null,
+                    billCode = null,
+                    masterMerchantCode = null,
+                    bankCode = null,
+                    serviceCode = null,
+                    extraData = null
+                ),
+                serviceInfo = ServiceInfo()
+            ),
+            internal = InitRequest.Data.Internal(
+                deviceInfo = DeviceInfo(
+                    imei = "xxxxxxxx", // imei hoặc device id của host app
+                    platform = DeviceInfo.Platform(
+                        os = "android",
+                        osVersion = Build.VERSION.RELEASE
+                    )
+                ),
+                session = null
+            )
+        ),
+        eventStatus = EventStatus.fromCode(ErrorCode.SDK000)
+    )
+}
+```
+
+Truyền `session = null` cho các flow không cần xác thực. Xem [cấu trúc đầy đủ của InitRequest](configuration.md#initrequest) để biết tất cả các trường và JSON schema.
+
 ## Lifecycle Events
 
 Lắng nghe qua `HostAppBridge.observeLifecycle(miniAppKey, miniAppLifecycle)`. Xem [Configuration](configuration.md#miniapplifecycle) để biết cách implement.
