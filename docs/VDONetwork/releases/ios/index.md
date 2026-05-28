@@ -2,4 +2,4 @@
 
 ## Version History
 
-_Release notes sẽ được tự động tạo bởi CI/CD pipeline._
+- [1.0.7-rc1](1.0.7-rc1.md)

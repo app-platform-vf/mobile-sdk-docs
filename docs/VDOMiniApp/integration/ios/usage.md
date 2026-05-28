@@ -39,34 +39,39 @@ VDOMiniAppSdk.shared.openMiniApp(
 
 ```swift
 let initRequest = VDOInitRequest(
-    data: VDODataSection(
-        external: VDOExternalData(
-            generalInfo: VDOGeneralInfo(
-                msisdn: "xxxxxxxxxx",
-                orderId: "xxxxxxxx",
-                billCode: "xxxxxx",
-                masterMerchantCode: "xxxxxx",
-                bankCode: nil,
-                serviceCode: nil,
-                extraData: nil
-            ),
-            serviceInfo: [:]
-        ),
-        internalInfo: VDOInternalInfo(
-            deviceInfo: VDODeviceInfo(
-                imei: "xxxxxxxx",
-                platform: VDOPlatform(os: "ios", osVersion: AppUtils.getOSVersion())
-            ),
-            session: needSession
-                ? VDOSession(auth: loginResponse?.toAuth(), accInfo: userInfoResponse?.toAccInfo())
-                : nil
-        )
-    ),
-    eventStatus: VDOEventStatus.fromCode(VDOErrorCode.SDK000),
-    requestId: "xxxxxxxxxxxxxx",
-    event: "INIT",
-    sender: MiniAppConst.sdkSender
+  data: VDODataSection(
+      external: VDOExternalData(
+          generalInfo: VDOGeneralInfo(
+              msisdn: "xxxxxxxxxx", // sdt đăng nhập
+              orderId: nil,
+              billCode: nil,
+              masterMerchantCode: nil,
+              bankCode: nil,
+              serviceCode: nil,
+              extraData: nil
+          ),
+          serviceInfo: [:]
+      ),
+      internalInfo: VDOInternalInfo(
+          deviceInfo: VDODeviceInfo(
+              imei: "xxxxxxxx", // imei or device id of host app
+              platform: VDOPlatform(os: "ios", osVersion: AppUtils.getOSVersion())
+          ),
+          session: nil
+      )
+  ),
+  eventStatus: VDOEventStatus.fromCode(VDOErrorCode.SDK000),
+  requestId: String(Int(Date().timeIntervalSince1970 * 1000)),
+  event: "INIT",
+  sender: "MINIAPP_SDK"
 )
+// Helper function to getOSVersion
+class AppUtils {
+    static func getOSVersion() -> String {
+        let osVersion = ProcessInfo.processInfo.operatingSystemVersion
+        return "iOS \(osVersion.majorVersion).\(osVersion.minorVersion).\(osVersion.patchVersion)"
+    }
+}
 ```
 
 ### Cấu trúc InitRequest JSON
