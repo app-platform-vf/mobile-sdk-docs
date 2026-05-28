@@ -17,7 +17,11 @@ Thêm repository vào `settings.gradle.kts`:
 dependencyResolutionManagement {
     repositories {
         maven {
-            url = uri("https://mobile-data.viettelmoney.vn/artifactory/gradle-viettelmoney")
+            url "https://mobile-data.viettelmoney.vn/artifactory/gradle-viettelmoney"
+            credentials {
+                username localProperties.getProperty("maven.username", "")
+                password localProperties.getProperty("maven.password", "")
+            }
         }
     }
 }
