@@ -9,6 +9,20 @@
 | Compile SDK | 35    |
 | Gradle      | 8.0+  |
 
+## Add Maven Repository
+
+Thêm repository vào `settings.gradle.kts`:
+
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        maven {
+            url = uri("https://mobile-data.viettelmoney.vn/artifactory/gradle-viettelmoney")
+        }
+    }
+}
+```
+
 ## Add Dependency
 
 Thêm dependency vào `app/build.gradle.kts`:
