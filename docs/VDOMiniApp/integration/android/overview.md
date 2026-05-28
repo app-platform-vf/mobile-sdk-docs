@@ -9,8 +9,8 @@ Mini App SDK cho Android cho phép tích hợp mini applications vào host app t
 | Requirement | Value |
 | ----------- | ----- |
 | Minimum SDK | 24    |
-| Target SDK  | 34    |
-| Compile SDK | 35    |
+| Target SDK  | 35    |
+| Compile SDK | 34    |
 | Gradle      | 8.0+  |
 
 ## Capabilities
