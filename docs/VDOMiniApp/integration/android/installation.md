@@ -2,9 +2,12 @@
 
 ## Requirements
 
-- Gradle 8.0+
-- minSdk 24
-- compileSdk 35 / targetSdk 34
+| Requirement | Value |
+| ----------- | ----- |
+| Minimum SDK | 24    |
+| Target SDK  | 34    |
+| Compile SDK | 35    |
+| Gradle      | 8.0+  |
 
 ## Add Dependency
 
@@ -12,6 +15,14 @@ Thêm dependency vào `app/build.gradle.kts`:
 
 ```kotlin
 implementation("vn.viettelpay:miniappsdk:2.2.0-rc3")
+```
+
+Đảm bảo `compileSdk` đặt đúng trong module `build.gradle.kts`:
+
+```kotlin
+android {
+    compileSdk = 35
+}
 ```
 
 ## Initialize the SDK
@@ -23,23 +34,22 @@ Khởi tạo trong `Application.onCreate()`:
 val sdkConfig = SdkConfig(
     hostAppApplicationName = getString(R.string.app_name),
     isLoadFromAsset = false,
-    apiKey = "<your-api-key>",       // cung cấp khi đăng ký trên AppCenter
-    variant = BuildVariant.Uat,      // môi trường để lấy thông tin mini app
-    partnerKey = "<your-partner-key>",  // cung cấp khi đăng ký
-    secretId = "<your-secret-id>",       // cung cấp khi đăng ký
+    apiKey = "<your-api-key>",
+    variant = BuildVariant.Uat,
+    partnerKey = "<your-partner-key>",
+    secretId = "<your-secret-id>",
 )
 
-val miniAppSdk = MiniAppSdk.getInstance()
-miniAppSdk.init(this.applicationContext, sdkConfig)
+MiniAppSdk.getInstance().init(applicationContext, sdkConfig)
 ```
 
 ### SdkConfig fields
 
-| Field                   | Type           | Required | Description |
-| ----------------------- | -------------- | -------- | ----------- |
-| `hostAppApplicationName`| String         | ✅        | Tên hiển thị của host app |
-| `isLoadFromAsset`       | Boolean        | ✅        | Load mini app từ assets hay network |
-| `apiKey`                | String         | ✅        | Xác thực với AppCenter; cấp per-merchant |
-| `variant`               | BuildVariant   | ✅        | `Uat` hoặc `Production` |
-| `partnerKey`            | String         | ✅        | Partner key, cấp khi đăng ký |
-| `secretId`              | String         | ✅        | Secret ID, cấp khi đăng ký |
+| Field                    | Type           | Required | Mô tả                                    |
+| ------------------------ | -------------- | -------- | ----------------------------------------- |
+| `hostAppApplicationName` | String         | ✅        | Tên hiển thị của host app                |
+| `isLoadFromAsset`        | Boolean        | ✅        | Load mini app từ assets hay network      |
+| `apiKey`                 | String         | ✅        | Xác thực với AppCenter; cấp per-merchant  |
+| `variant`                | BuildVariant   | ✅        | `Staging`, `Uat`, hoặc `Product`         |
+| `partnerKey`             | String         | ✅        | Partner key, cấp khi đăng ký             |
+| `secretId`               | String         | ✅        | Secret ID, cấp khi đăng ký               |
