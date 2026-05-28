@@ -1,46 +1,66 @@
 # Android Usage
 
-## Mở Mini App
+## Mở Mini App (Fragment)
+
+Mở mini app dạng Fragment trong Activity hiện tại:
 
 ```kotlin
-private fun openMiniApp() {
-    val miniAppKey = "<mini-app-key>"  // đăng ký trên AppCenter
-
-    val initInfo = createInitRequest()
-
-    val hostView = HostView(
-        requireActivity(), R.id.nav_host_fragment,
-        MiniAppHeaderConfig(enabled = false)  // MiniAppHeaderConfig không bắt buộc
+MiniAppSdk.getInstance().apply {
+    hostAppBridge = MyHostAppBridge()
+    openMiniApp(
+        miniAppKey = "<mini-app-key>",
+        initInfo = createInitRequest(),
+        hostView = HostView(
+            context = this@MyActivity,
+            containerId = R.id.container
+        ),
+        parameter = mapOf("param1" to listOf("value1"))
     )
-
-    with(MiniAppSdk.getInstance()) {
-        this.hostAppBridge = hostAppBridge  // gán HostAppBridge đã khởi tạo
-        val params = mapOf("param1" to listOf("1"), "param2" to listOf("2"))
-        // Mở dạng Fragment trong Activity hiện tại:
-        openMiniApp(miniAppKey, initInfo, hostView, parameter = params)
-        // Hoặc mở trong Activity mới:
-        // openMiniAppActivity(miniAppKey, initInfo, hostView, parameter = params)
-    }
 }
+```
+
+## Mở Mini App trong Activity mới
+
+```kotlin
+MiniAppSdk.getInstance().openMiniAppActivity(
+    miniAppKey = "<mini-app-key>",
+    initInfo = createInitRequest(),
+    hostView = HostView(context = this),
+    parameter = mapOf()
+)
 ```
 
 ## Mở Mini App từ Deeplink / QR Code
 
 ```kotlin
-with(MiniAppSdk.getInstance()) {
-    openMiniAppFromLinkQR(initInfo, hostView, qrLink, params)
-}
+// Mở trong Fragment:
+MiniAppSdk.getInstance().openMiniAppFromDeepLink(
+    initInfo = createInitRequest(),
+    hostView = HostView(
+        context = this,
+        containerId = R.id.container
+    ),
+    qrContent = deepLinkUrl
+)
+
+// Mở trong Activity mới:
+MiniAppSdk.getInstance().openMiniAppActivityFromDeepLink(
+    initInfo = createInitRequest(),
+    hostView = HostView(context = this),
+    qrContent = deepLinkUrl
+)
 ```
 
-`qrLink` nhận: Adjust link, Adjust QR link, hoặc QR data link.
+`qrContent` nhận: Adjust link, Adjust QR link, hoặc QR data link.
 
 ## Lifecycle Events
 
-| Event | Mô tả |
-| ----- | ----- |
-| `MiniAppLifecycle.Started` | Mini app đã mở thành công |
-| `MiniAppLifecycle.Stopped` | Mini app đã đóng |
-| `MiniAppLifecycle.Resumed` | Mini app resume từ background |
-| `MiniAppLifecycle.Paused` | Mini app chuyển sang background |
+Lắng nghe qua `HostAppBridge.observeLifecycle(miniAppKey, miniAppLifecycle)`. Xem [Configuration](configuration.md#miniapplifecycle) để biết cách implement.
 
-Lắng nghe qua `HostAppListener.observeLifecycle(miniAppId, miniAppLifecycle)`.
+| State                                  | Mô tả                                    |
+| -------------------------------------- | ---------------------------------------- |
+| `MiniAppLifecycle.Initialization`      | Mini app đang khởi tạo                   |
+| `MiniAppLifecycle.RunningInForeground` | Mini app đang chạy ở foreground          |
+| `MiniAppLifecycle.RunningInBackground` | Mini app chuyển sang background          |
+| `MiniAppLifecycle.Error(msg)`          | Mini app gặp lỗi                         |
+| `MiniAppLifecycle.Unloading`           | Mini app đang đóng                       |
