@@ -13,10 +13,9 @@ Mapping version giữa các SDK.
 
 | VDOMiniApp | minSdk | targetSdk | Gradle |
 | ---------- | ------ | --------- | ------ |
-| 2.2.0-rc3  | 24     | 34        | 8.0    |
+| 2.2.0-rc3  | 24     | 35        | 8.0    |
 | 2.0.20     | 24     | 34        | 8.0    |
 
-> **Note:** 2.2.0-rc3 bumps `compileSdk` to 35 (targetSdk remains 34).
 
 ## Lưu ý
 
