@@ -9,7 +9,7 @@ sidebar_position: 2
 | Requirement | Value |
 | ----------- | ----- |
 | Minimum SDK | 24    |
-| Target SDK  | 34    |
+| Target SDK  | 35    |
 | Compile SDK | 35    |
 | Gradle      | 8.0+  |
 
@@ -36,7 +36,7 @@ dependencyResolutionManagement {
 Thêm dependency vào `app/build.gradle.kts`:
 
 ```kotlin
-implementation("vn.viettelpay:miniappsdk:2.2.0-rc3")
+implementation("vn.viettelpay:miniappsdk:2.2.0-rc7")
 ```
 
 Đảm bảo `compileSdk` đặt đúng trong module `build.gradle.kts`:
