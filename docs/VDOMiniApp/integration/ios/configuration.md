@@ -66,6 +66,10 @@ class HostAppBridge: VDOHostAppBridge {
         completion(jsonObject)
     }
 
+    func getLocation(completion: @escaping (_ mLocation: MiniAppLocation?) -> Void) {
+        completion(MiniAppLocation(latitude: 21.028511, longitude: 105.804817))
+    }
+
     func intercept(miniAppKey: String, request: String) { }
 
     func expiredSession(miniAppKey: String, data: [String: Any]) { }
@@ -81,6 +85,7 @@ class HostAppBridge: VDOHostAppBridge {
 | Method              | Mô tả                                                    |
 | ------------------- | --------------------------------------------------------- |
 | `getUserData`       | Trả về thông tin user theo yêu cầu từ MiniApp            |
+| `getLocation`       | Trả về `MiniAppLocation?` (WGS-84) hiện tại của thiết bị |
 | `intercept`         | Xử lý request intercept từ MiniApp                       |
 | `expiredSession`    | Được gọi khi session hết hạn                             |
 | `observeLifecycle`  | Theo dõi lifecycle events của MiniApp                     |
@@ -99,7 +104,8 @@ let theme = VDOMiniAppThemeConfig(
     toolbarMode: .normal,
     hideIOSSafeAreaBottom: false,
     actionButtonThemeType: .dark,
-    statusBarForeground: .light
+    statusBarForeground: .light,
+    statusBarMode: .display
 )
 ```
 
@@ -111,18 +117,31 @@ let theme = VDOMiniAppThemeConfig(
 | `headerTitle`          | `String?`                      | Tiêu đề hiển thị trên toolbar                                                       |
 | `textColor`            | `String?`                      | Màu chữ tiêu đề và các nút, hex string hoặc tên màu                                |
 | `leftButton`           | `MiniAppLeftButton?`           | `.back` (hiện nút back) hoặc `.none` (ẩn nút back)                                 |
-| `toolbarMode`          | `MiniAppToolbarMode?`          | `.normal`, `.hidden`, hoặc `.transparent` (xem bảng bên dưới)                      |
+| `toolbarMode`          | `MiniAppToolbarMode?`          | `.normal`, `.hidden`, hoặc `.transparent` — **chỉ điều khiển header bar** (xem bảng) |
 | `hideIOSSafeAreaBottom`| `Bool?`                        | Ẩn safe area inset phía dưới trên thiết bị iOS                                     |
 | `actionButtonThemeType`| `MiniAppActionButtonThemeType?`| `.light` hoặc `.dark` — màu nền capsule chứa nút more/close                        |
 | `statusBarForeground`  | `MiniAppStatusBarForeground?`  | `.light` (icon trắng) hoặc `.dark` (icon đen); `nil` = tự động theo headerColor    |
+| `statusBarMode`        | `MiniAppStatusBarMode?`        | `.display`, `.hidden`, hoặc `.transparent` — điều khiển status bar độc lập với `toolbarMode`; mặc định `.display` |
 
 ### MiniAppToolbarMode
 
+Chỉ điều khiển header bar. Status bar được điều khiển độc lập qua `statusBarMode`.
+
 | Giá trị       | Mô tả                                                                    |
 | ------------- | ------------------------------------------------------------------------- |
-| `.normal`     | Status bar và header bar hiển thị bình thường                            |
-| `.hidden`     | Ẩn cả status bar và header bar, Mini App full screen                     |
-| `.transparent`| Status bar và header bar trong suốt, nội dung Mini App hiển thị phía dưới |
+| `.normal`     | Header bar hiển thị bình thường với màu theme                            |
+| `.hidden`     | Ẩn header bar, Mini App extend lên đỉnh màn hình                         |
+| `.transparent`| Header bar overlay trong suốt phía trên web content                       |
+
+### MiniAppStatusBarMode
+
+Điều khiển status bar độc lập với `toolbarMode`.
+
+| Giá trị       | Mô tả                                                                                |
+| ------------- | ------------------------------------------------------------------------------------- |
+| `.display`    | Status bar hiển thị với nền solid (dùng `headerColor`)                                |
+| `.hidden`     | Ẩn status bar (đồng hồ, pin, signal cũng bị ẩn)                                       |
+| `.transparent`| Status bar nền trong suốt; web content extend ra sau và touch ở vùng đó pass-through  |
 
 > `MiniAppThemeConfig` là typealias của `VDOMiniAppThemeConfig`, được giữ lại để tương thích ngược.
 
