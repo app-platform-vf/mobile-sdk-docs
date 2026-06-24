@@ -106,7 +106,8 @@ val themeConfig = MiniAppThemeConfig(
     toolbarMode = ToolbarMode.NORMAL,
     hideAndroidBottomNavigationBar = true,
     actionButtonThemeType = ActionButtonThemeType.DARK,
-    statusBarForeground = StatusBarForeground.LIGHT
+    statusBarForeground = StatusBarForeground.LIGHT,
+    statusBarMode = StatusBarMode.DISPLAY
 )
 ```
 
@@ -118,18 +119,29 @@ val themeConfig = MiniAppThemeConfig(
 | `headerTitle`                    | `String?`                | Tiêu đề hiển thị trên toolbar                                                           |
 | `textColor`                      | `String?`                | Màu chữ/icon trên toolbar, hex string hoặc `"WHITE"` / `"BLACK"`                       |
 | `leftButton`                     | `LeftButtonType?`        | `BACK` (hiện nút back) hoặc `NONE` (ẩn nút back)                                      |
-| `toolbarMode`                    | `ToolbarMode?`           | `NORMAL`, `HIDDEN`, hoặc `TRANSPARENT`                                                  |
+| `toolbarMode`                    | `ToolbarMode?`           | `NORMAL`, `HIDDEN`, hoặc `TRANSPARENT` — chỉ điều khiển header bar                     |
 | `hideAndroidBottomNavigationBar` | `Boolean?`               | Ẩn navigation bar phía dưới (mặc định `true`)                                          |
 | `actionButtonThemeType`          | `ActionButtonThemeType?` | `LIGHT` hoặc `DARK` — màu nền capsule chứa nút more/close                              |
 | `statusBarForeground`            | `StatusBarForeground?`   | `DARK` (icon đen) hoặc `LIGHT` (icon trắng); `null` = tự động theo `headerColor`      |
+| `statusBarMode`                  | `StatusBarMode?`         | `DISPLAY`, `HIDDEN`, hoặc `TRANSPARENT` — điều khiển status bar (từ 2.2.0-rc10)        |
 
 ### ToolbarMode
 
 | Giá trị       | Mô tả                                                          |
 | ------------- | -------------------------------------------------------------- |
-| `NORMAL`      | Status bar và header bar hiển thị bình thường                  |
-| `HIDDEN`      | Ẩn header bar, mini app full screen                            |
+| `NORMAL`      | Header bar hiển thị bình thường                                |
+| `HIDDEN`      | Ẩn header bar                                                  |
 | `TRANSPARENT` | Header bar trong suốt, nội dung mini app hiển thị phía dưới   |
+
+> Từ 2.2.0-rc10, `ToolbarMode` chỉ điều khiển header bar. Status bar được điều khiển độc lập qua `statusBarMode`.
+
+### StatusBarMode
+
+| Giá trị       | Mô tả                                                          |
+| ------------- | -------------------------------------------------------------- |
+| `DISPLAY`     | Status bar hiển thị bình thường (mặc định)                     |
+| `HIDDEN`      | Ẩn status bar, mini app vẽ tràn lên vùng status bar           |
+| `TRANSPARENT` | Status bar trong suốt, nội dung mini app hiển thị phía dưới   |
 
 ## InitRequest
 
@@ -233,6 +245,54 @@ Truyền `session = null` cho các flow không cần xác thực.
   }
 }
 ```
+
+## UrlPattern (Child mini-app callback)
+
+`UrlPattern` định nghĩa cách intercept navigation trong child mini-app WebView. Khi mở child mini app, có thể cung cấp danh sách `UrlPattern` cùng với `returnUrl`/`cancelUrl` legacy:
+
+```kotlin
+data class UrlPattern(
+    val pattern: String,  // substring match trên decoded URL
+    val type: String      // forwarded verbatim về host (vd. "RETURN", "CANCEL")
+)
+```
+
+Khi WebView điều hướng tới một URL mà decoded form chứa `pattern` làm substring, SDK thoát mini app và trả `type` về caller. `urlPatterns` được match trước, fallback về `returnUrl`/`cancelUrl` nếu không có pattern nào match.
+
+| Field     | Type     | Mô tả                                                                    |
+| --------- | -------- | ------------------------------------------------------------------------ |
+| `pattern` | `String` | Substring match trên decoded URL. Phải non-blank và đủ specific          |
+| `type`    | `String` | String tùy ý trả về host. Nên dùng uppercase (vd. `"RETURN"`, `"CANCEL"`) |
+
+## Save image / file events
+
+Từ 2.2.0-rc10, mini app có thể yêu cầu SDK lưu ảnh/file qua JS bridge:
+
+### SAVE_IMAGE_TO_GALLERY
+
+`MiniAppEvent.SAVE_IMAGE_TO_GALLERY` — lưu ảnh vào thư viện thiết bị.
+
+Payload `SaveImageToGalleryParam`:
+
+| Field  | Type     | Mô tả                                                |
+| ------ | -------- | ---------------------------------------------------- |
+| `type` | `String` | `"url"` hoặc `"base64"`                              |
+| `data` | `String` | URL string hoặc chuỗi base64-encoded của ảnh         |
+
+Trên Android < Q (API 29), SDK request `PHOTOS_PERMISSION` trước khi lưu.
+
+### SAVE_FILE
+
+`MiniAppEvent.SAVE_FILE` — tải file về thiết bị.
+
+Payload `SaveFileParam`:
+
+| Field      | Type     | Mô tả                          |
+| ---------- | -------- | ------------------------------ |
+| `url`      | `String` | URL của file cần tải           |
+| `fileName` | `String` | Tên file khi lưu               |
+
+Trên Android < Q (API 29), SDK request `DOCUMENT_PERMISSION` trước khi lưu.
 
 ## MiniAppLifecycle
 
