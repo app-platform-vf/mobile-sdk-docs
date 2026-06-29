@@ -29,6 +29,7 @@ const config = {
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
+          sidebarItemsGenerator: require('./sidebarItemsGenerator.js'),
           routeBasePath: '/',
         },
         blog: false,
