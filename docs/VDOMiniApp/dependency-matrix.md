@@ -16,6 +16,7 @@ Mapping version giữa các SDK.
 
 | VDOMiniApp | minSdk | targetSdk | Gradle |
 | ---------- | ------ | --------- | ------ |
+| 2.2.0      | 24     | 35        | 8.0    |
 | 2.2.0-rc10 | 24     | 35        | 8.0    |
 | 2.2.0-rc7  | 24     | 35        | 8.0    |
 | 2.2.0-rc3  | 24     | 35        | 8.0    |

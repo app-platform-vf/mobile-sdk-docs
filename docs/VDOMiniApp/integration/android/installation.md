@@ -36,7 +36,7 @@ dependencyResolutionManagement {
 Thêm dependency vào `app/build.gradle.kts`:
 
 ```kotlin
-implementation("vn.viettelpay:miniappsdk:2.2.0-rc10")
+implementation("vn.viettelpay:miniappsdk:2.2.0")
 ```
 
 Đảm bảo `compileSdk` đặt đúng trong module `build.gradle.kts`:
