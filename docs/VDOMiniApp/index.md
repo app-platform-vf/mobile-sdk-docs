@@ -12,6 +12,7 @@ Mini App SDK (`VDOMiniApp`) cho phép host applications tích hợp và chạy m
 
 - [iOS Integration](integration/ios/overview.md)
 - [Android Integration](integration/android/overview.md)
+- [Flutter Integration](integration/flutter/overview.md)
 
 ## Migration Guide
 
