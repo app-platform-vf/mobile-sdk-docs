@@ -22,60 +22,69 @@ sidebar_position: 2
 > ⚠️ **Không dùng Flutter >= 3.47.0.** Từ bản đó Flutter tự đặt
 > `ios.deployment_target = 15.0`, xung đột với `platform :ios, '13.0'` mà plugin và các
 > pod native yêu cầu. `pod install` sẽ báo *"they required a higher minimum deployment target"*.
->
-> Muốn nâng lên Flutter 3.47+ thì phải nâng đồng thời `s.platform` trong podspec, Podfile
-> của mọi host app, và thống nhất lại nền iOS tối thiểu cho toàn bộ sản phẩm.
 
-Plugin ghim `3.38.10` trong `.fvmrc` — khớp với bản Flutter trên agent CI. Host app không bắt buộc dùng đúng bản đó, nhưng phải
-nằm trong khoảng trên.
+## Bước 1: Cấp quyền cho `dart pub`
 
-### Đã kiểm chứng trên các bản
+> ⚠️ Liên hệ **team phát triển SDK** để được cấp username và password JFrog.
 
-| Flutter     | Dart    | Kết quả                          |
-| ----------- | ------- | -------------------------------- |
-| 3.19.6      | 3.3.4   | ✅ resolve + biên dịch sạch      |
-| 3.38.4      | 3.10.3  | ✅ resolve + biên dịch sạch      |
-| **3.38.10** | 3.10.x  | ✅ **bản plugin ghim**           |
-| 3.44.9      | 3.12.2  | ✅ resolve + biên dịch sạch      |
-| 3.47.2      | 3.13.2  | ⚠️ Dart sạch, nhưng phá nền iOS  |
+### 1.1. Tạo token truy cập JFrog từ dart pub
 
-## Tài khoản JFrog (bắt buộc)
+Gọi API token của Artifactory, xác thực bằng chính username/password của bạn:
 
-Bạn cần **username + API token** của JFrog Artifactory.
+```bash
+curl -u "<USERNAME>:<PASSWORD>" \
+  -X POST "https://mobile-data.viettelmoney.vn/artifactory/api/security/token" \
+  -d "username=<USERNAME>" \
+  -d "scope=member-of-groups:*" \
+  -d "expires_in=31536000"
+```
 
-> ⚠️ Liên hệ **team phát triển SDK** để được cấp tài khoản.
+Kết quả trả về dạng JSON:
 
-Khai báo bằng biến môi trường:
+```json
+{
+  "access_token": "eyJ2ZXIiOiIyIiwidHlwIjoiSldUIiwi...",
+  "expires_in": 31536000,
+  "scope": "member-of-groups:*",
+  "token_type": "Bearer"
+}
+```
+
+Lấy giá trị `access_token`.
+
+> `expires_in=31536000` là một năm.
+> Đặt `0` để không có thời hạn expired.
+
+### 1.2. Nhập token cho `dart pub`
+
+```bash
+dart pub token add https://mobile-data.viettelmoney.vn/artifactory/vdo-pub-packages
+```
+
+Lệnh hỏi token qua stdin — dán `access_token` ở bước 1.1 vào.
+:::
+
+---
+## Bước 2: Export tài khoản JFrog
 
 ```bash
 export JFROG_USERNAME="<YOUR_USERNAME>"
-export JFROG_PASSWORD="<YOUR_API_TOKEN>"
+export JFROG_PASSWORD="<YOUR_PASSWORD>"
 ```
+> ⚠️ Liên hệ **team phát triển SDK** để được cấp tài khoản. Thêm hai dòng trên vào
+> `~/.zshrc` hoặc `~/.bashrc` để không phải khai lại mỗi phiên terminal.
 
 ---
 
-## Bước 1: Khai báo dependency
+## Bước 3: Khai báo dependency
 
-Thêm vào `pubspec.yaml` của app.
-
-### Bản tiêu chuẩn
+Thêm vào `pubspec.yaml` của app:
 
 ```yaml
 dependencies:
   mini_app_plugin:
-    git:
-      url: <URL_REPO_PLUGIN>
-      ref: develop
-```
-
-### Bản có eKYC
-
-```yaml
-dependencies:
-  mini_app_plugin:
-    git:
-      url: <URL_REPO_PLUGIN>
-      ref: ekyc
+    hosted: https://mobile-data.viettelmoney.vn/artifactory/vdo-pub-packages
+    version: <version>
 ```
 
 Sau đó chạy:
@@ -85,10 +94,9 @@ flutter pub get
 ```
 
 ---
+## Bước 4: Cấu hình iOS
 
-## Bước 2: Cấu hình iOS
-
-### 2.1. Khai báo pod trong Podfile
+### 4.1. Khai báo pod trong Podfile
 
 Các SDK native là **private podspec** nằm trong thư mục plugin, không có trên CocoaPods CDN, nên host app phải trỏ đường dẫn tới từng podspec.
 
@@ -155,17 +163,13 @@ target 'Runner' do
 end
 ```
 
-### 2.2. Deployment target
+### 4.2. Deployment target
 
 Đặt nền iOS ở **dòng đầu** `ios/Podfile`, khớp với `s.platform` của plugin:
 
 ```ruby
 platform :ios, '13.0'
 ```
-
-> ⚠️ Đây là nơi Flutter >= 3.47.0 gây hỏng: bản đó ghi đè thành 15.0 và `pod install` báo
-> *"they required a higher minimum deployment target"*. Nếu gặp lỗi này, kiểm tra phiên bản
-> Flutter trước khi sửa con số trong Podfile.
 
 Ngoài ra `eKYC.xcframework` được biên dịch cho iOS 12.0, nên `CryptoSwift` phải giữ 12.0.
 Thêm `post_install` vào cuối `ios/Podfile`:
@@ -185,7 +189,7 @@ post_install do |installer|
 end
 ```
 
-### 2.3. Permissions: chỉ bản có eKYC
+### 4.3. Permissions: chỉ bản có eKYC
 
 Thêm vào `ios/Runner/Info.plist`:
 
@@ -206,7 +210,7 @@ Thêm vào `ios/Runner/Info.plist`:
 <string>Ứng dụng cần quyền sử dụng NFC để đọc chip trên giấy tờ tuỳ thân</string>
 ```
 
-### 2.4. Entitlement NFC: chỉ bản có eKYC
+### 4.4. Entitlement NFC: chỉ bản có eKYC
 
 Trong Xcode: chọn target **Runner** → **Signing & Capabilities** → **+ Capability** → **Near Field Communication Tag Reading**.
 
@@ -220,7 +224,7 @@ Xcode tạo file `Runner.entitlements` với nội dung:
 </array>
 ```
 
-### 2.5. Cài đặt pod
+### 4.5. Cài đặt pod
 
 ```bash
 cd ios
@@ -231,9 +235,9 @@ Mỗi pod được xác minh bằng `sha256` khi tải. Nếu báo lỗi checksu
 
 ---
 
-## Bước 3: Cấu hình Android
+## Bước 5: Cấu hình Android
 
-### 3.1. Build config
+### 5.1. Build config
 
 Trong `android/app/build.gradle`:
 
@@ -253,7 +257,7 @@ android {
 }
 ```
 
-### 3.2. Repository
+### 5.2. Repository
 
 ```gradle
 allprojects {
@@ -266,7 +270,7 @@ allprojects {
 }
 ```
 
-### 3.3. Permissions
+### 5.3. Permissions
 
 Trong `android/app/src/main/AndroidManifest.xml`:
 
